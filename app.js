@@ -82,10 +82,49 @@ const cargarSeriesPopulares = async () => {
         }
         const datos = await respuesta.json();
         mostrarSeries(datos.results);
+        resultsTitle.textContent = 'Series Populares';
         ocultarLoading();
     } catch (error) {
         mostrarError('No se pudieron cargar las series.');
     }
 };
+
+const buscarSeries = async () => {
+    const texto = searchInput.value.trim();
+    if (texto === '') {
+        cargarSeriesPopulares();
+        return;
+    }
+    mostrarLoading();
+    try {
+        const respuesta = await fetch(`${BASE_URL}/search/tv?api_key=${API_KEY}&query=${encodeURIComponent(texto)}&language=es-ES`);
+        if (!respuesta.ok) {
+            throw new Error('Error al buscar series');
+        }
+        const datos = await respuesta.json();
+        mostrarSeries(datos.results);
+        resultsTitle.textContent = `Resultados para: ${texto}`;
+        ocultarLoading();
+    } catch (error) {
+        mostrarError('No se pudieron buscar las series.');
+    }
+};
+
+searchInput.addEventListener('input', () => {
+    buscarSeries();
+});
+
+clearBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    cargarSeriesPopulares();
+});
+
+retryBtn.addEventListener('click', () => {
+    if (searchInput.value.trim() === '') {
+        cargarSeriesPopulares();
+    } else {
+        buscarSeries();
+    }
+});
 
 cargarSeriesPopulares();
