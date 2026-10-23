@@ -79,15 +79,18 @@ const cargarSeriesPopulares = async () => {
     mostrarLoading();
     try {
         const respuesta = await fetch(`${BASE_URL}/tv/popular?api_key=${API_KEY}&language=es-ES`);
+        if (respuesta.status === 401) {
+            throw new Error('API Key inválida');
+        }
         if (!respuesta.ok) {
-            throw new Error('Error al cargar series');
+            throw new Error('No se pudieron cargar las series.');
         }
         const datos = await respuesta.json();
         mostrarSeries(datos.results);
         resultsTitle.textContent = 'Series Populares';
         ocultarLoading();
     } catch (error) {
-        mostrarError('No se pudieron cargar las series.');
+        mostrarError(error.message === 'Failed to fetch' ? 'Error de conexión' : error.message);
     }
 };
 
@@ -100,15 +103,18 @@ const buscarSeries = async () => {
     mostrarLoading();
     try {
         const respuesta = await fetch(`${BASE_URL}/search/tv?api_key=${API_KEY}&query=${encodeURIComponent(texto)}&language=es-ES`);
+        if (respuesta.status === 401) {
+            throw new Error('API Key inválida');
+        }
         if (!respuesta.ok) {
-            throw new Error('Error al buscar series');
+            throw new Error('No se pudieron buscar las series.');
         }
         const datos = await respuesta.json();
         mostrarSeries(datos.results);
         resultsTitle.textContent = `Resultados para: ${texto}`;
         ocultarLoading();
     } catch (error) {
-        mostrarError('No se pudieron buscar las series.');
+        mostrarError(error.message === 'Failed to fetch' ? 'Error de conexión' : error.message);
     }
 };
 
@@ -134,8 +140,11 @@ const abrirModal = async (id) => {
     modalBody.innerHTML = '<p>Cargando detalles...</p>';
     try {
         const respuesta = await fetch(`${BASE_URL}/tv/${id}?api_key=${API_KEY}&language=es-ES`);
+        if (respuesta.status === 401) {
+            throw new Error('API Key inválida');
+        }
         if (!respuesta.ok) {
-            throw new Error('Error al cargar detalles');
+            throw new Error('No se pudieron cargar los detalles.');
         }
         const serie = await respuesta.json();
         const generos = serie.genres.map(genero => genero.name).join(', ');
@@ -150,7 +159,7 @@ const abrirModal = async (id) => {
             <p class="modal__overview">${serie.overview || 'Sin sinopsis disponible.'}</p>
         `;
     } catch (error) {
-        modalBody.innerHTML = '<p>No se pudieron cargar los detalles.</p>';
+        modalBody.innerHTML = `<p>${error.message === 'Failed to fetch' ? 'Error de conexión' : error.message}</p>`;
     }
 };
 
