@@ -60,8 +60,10 @@ const mostrarSeries = (series) => {
         const año = serie.first_air_date ? serie.first_air_date.substring(0, 4) : 'Sin año';
         const imagen = serie.poster_path ? `${IMAGE_URL}${serie.poster_path}` : '';
         seriesGrid.innerHTML += `
-            <div class="serie-card">
-                <img class="serie-card__image" src="${imagen}" alt="${serie.name}">
+            <div class="serie-card" data-id="${serie.id}">
+                <div class="serie-card__poster">
+                    <img class="serie-card__image" src="${imagen}" alt="${serie.name}">
+                </div>
                 <div class="serie-card__content">
                     <h3 class="serie-card__title">${serie.name}</h3>
                     <p class="serie-card__year">${año}</p>
@@ -126,5 +128,44 @@ retryBtn.addEventListener('click', () => {
         buscarSeries();
     }
 });
+
+const abrirModal = async (id) => {
+    modal.classList.add('modal--show');
+    modalBody.innerHTML = '<p>Cargando detalles...</p>';
+    try {
+        const respuesta = await fetch(`${BASE_URL}/tv/${id}?api_key=${API_KEY}&language=es-ES`);
+        if (!respuesta.ok) {
+            throw new Error('Error al cargar detalles');
+        }
+        const serie = await respuesta.json();
+        const generos = serie.genres.map(genero => genero.name).join(', ');
+        modalBody.innerHTML = `
+            <h2 class="modal__title">${serie.name}</h2>
+            <div class="modal__info">
+                <span>Temporadas: ${serie.number_of_seasons}</span>
+                <span>Episodios: ${serie.number_of_episodes}</span>
+                <span>Géneros: ${generos || 'Sin géneros'}</span>
+                <span>Estado: ${serie.status}</span>
+            </div>
+            <p class="modal__overview">${serie.overview || 'Sin sinopsis disponible.'}</p>
+        `;
+    } catch (error) {
+        modalBody.innerHTML = '<p>No se pudieron cargar los detalles.</p>';
+    }
+};
+
+seriesGrid.addEventListener('click', (e) => {
+    const tarjeta = e.target.closest('.serie-card');
+    if (tarjeta) {
+        abrirModal(tarjeta.dataset.id);
+    }
+});
+
+const cerrarModal = () => {
+    modal.classList.remove('modal--show');
+};
+
+modalClose.addEventListener('click', cerrarModal);
+modalOverlay.addEventListener('click', cerrarModal);
 
 cargarSeriesPopulares();
